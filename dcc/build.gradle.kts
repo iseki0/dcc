@@ -29,7 +29,35 @@ kotlin {
     jvmToolchain(17)
 }
 
+val doPom by extra<MavenPom.(Project) -> Unit> {
+    { project ->
+        name = project.name
+        description = "Reflection-free utils for Kotlin data class and Java record."
+        url = "https://github.com/iseki0/dcc"
+        licenses {
+            license {
+                name = "Apache-2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0"
+            }
+        }
+        developers {
+            developer {
+                id = "iseki0"
+                name = "iseki zero"
+                email = "iseki@iseki.space"
+            }
+        }
+        scm {
+            connection = "scm:git:https://github.com/iseki0/dcc.git"
+            developerConnection = "scm:git:https://github.com/iseki0/dcc.git"
+            url = "https://github.com/iseki0/dcc"
+        }
+    }
+}
+
 subprojects {
+
+
     apply<SigningPlugin>()
     apply<MavenPublishPlugin>()
     apply<JavaLibraryPlugin>()
@@ -54,33 +82,12 @@ subprojects {
                 }
             }
         }
+
         publications {
-            if (project.name!="gradle-plugin"){
+            if (project.name != "gradle-plugin") {
                 create<MavenPublication>("mavenJava") {
                     from(components["java"])
-                    pom {
-                        name = this@subprojects.name
-                        description = "Reflection-free utils for Kotlin data class and Java record."
-                        url = "https://github.com/iseki0/dcc"
-                        licenses {
-                            license {
-                                name = "Apache-2.0"
-                                url = "https://www.apache.org/licenses/LICENSE-2.0"
-                            }
-                        }
-                        developers {
-                            developer {
-                                id = "iseki0"
-                                name = "iseki zero"
-                                email = "iseki@iseki.space"
-                            }
-                        }
-                        scm {
-                            connection = "scm:git:https://github.com/iseki0/dcc.git"
-                            developerConnection = "scm:git:https://github.com/iseki0/dcc.git"
-                            url = "https://github.com/iseki0/dcc"
-                        }
-                    }
+                    pom { doPom(this@subprojects) }
                 }
             }
         }

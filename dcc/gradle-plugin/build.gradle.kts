@@ -16,6 +16,17 @@ gradlePlugin {
             implementationClass = "space.iseki.dcc.gp.GPlugin"
         }
     }
+    publishing {
+        afterEvaluate {
+            publications.getByName("postDccPluginMarkerMaven") {
+                this as MavenPublication
+                pom {
+                    val doPom: MavenPom.(Project) -> Unit by rootProject.extra
+                    doPom(project)
+                }
+            }
+        }
+    }
 }
 
 afterEvaluate {
