@@ -56,8 +56,6 @@ val doPom by extra<MavenPom.(Project) -> Unit> {
 }
 
 subprojects {
-
-
     apply<SigningPlugin>()
     apply<MavenPublishPlugin>()
     apply<JavaLibraryPlugin>()

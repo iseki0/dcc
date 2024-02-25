@@ -17,12 +17,14 @@ gradlePlugin {
         }
     }
     publishing {
+        // do afterEvaluate, otherwise name&description will miss
         afterEvaluate {
-            publications.getByName("postDccPluginMarkerMaven") {
+            publications.configureEach {
                 this as MavenPublication
                 pom {
                     val doPom: MavenPom.(Project) -> Unit by rootProject.extra
                     doPom(project)
+                    name = "gradle-plugin"
                 }
             }
         }
@@ -39,5 +41,6 @@ afterEvaluate {
         }
     }
 }
+
 
 
