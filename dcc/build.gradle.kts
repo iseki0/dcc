@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
@@ -18,15 +21,6 @@ allprojects {
         isPreserveFileTimestamps = false
         isReproducibleFileOrder = true
     }
-}
-
-
-dependencies {
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-}
-
-kotlin {
-    jvmToolchain(17)
 }
 
 val doPom by extra<MavenPom.(Project) -> Unit> {
@@ -59,10 +53,21 @@ subprojects {
     apply<SigningPlugin>()
     apply<MavenPublishPlugin>()
     apply<JavaLibraryPlugin>()
+    apply(plugin = "org.jetbrains.kotlin.jvm")
     java {
         withJavadocJar()
         withSourcesJar()
     }
+    kotlin {
+        jvmToolchain(17)
+    }
+    tasks.withType<KotlinCompile> {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+            freeCompilerArgs.add("-Xjvm-default=all")
+        }
+    }
+
     publishing {
         repositories {
             maven {
@@ -115,6 +120,4 @@ val publishAll: Task by tasks.creating {
         dependsOn(it.tasks.publish)
     }
 }
-
-
 

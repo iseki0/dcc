@@ -1,7 +1,3 @@
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
     api(project(":api"))
     api("org.ow2.asm:asm:9.6")
