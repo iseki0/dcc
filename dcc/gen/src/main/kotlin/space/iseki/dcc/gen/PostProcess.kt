@@ -7,6 +7,9 @@ import java.nio.file.Files
 import kotlin.io.path.extension
 
 object PostProcess {
+    /**
+     * Process a directory of class files.
+     */
     @JvmStatic
     fun processDir(dir: File) {
         val fileSeq = dir.walk().filter {

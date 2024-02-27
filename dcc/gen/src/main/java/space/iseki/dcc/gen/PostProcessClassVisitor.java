@@ -6,6 +6,9 @@ import org.objectweb.asm.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * <p>PostProcessClassVisitor class.</p>
+ */
 @SuppressWarnings("unused")
 public class PostProcessClassVisitor extends ClassVisitor {
     static final int API = Opcodes.ASM9;

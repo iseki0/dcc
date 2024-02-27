@@ -2,13 +2,11 @@
 
 package space.iseki.dcc.gen
 
-import kotlinx.metadata.KmClass
 import kotlinx.metadata.declaresDefaultValue
 import kotlinx.metadata.isData
 import kotlinx.metadata.isSecondary
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import space.iseki.dcc.Data
-import java.util.*
 
 private val EMPTY_INT_ARRAY = IntArray(0)
 private val EMPTY_STRING_ARRAY = Array(0) { "" }
@@ -31,15 +29,6 @@ internal fun genMetadata(
     packageName = pn ?: "",
     extraInt = xi ?: 0,
 )
-
-internal fun readClassMetadata(metadata: Metadata) =
-    (KotlinClassMetadata.readStrict(metadata) as KotlinClassMetadata.Class).kmClass
-
-internal fun getOptionalNames(data: KmClass): Set<String> {
-    check(data.isData)
-    return data.constructors.first { !it.isSecondary }.valueParameters.filter { it.declaresDefaultValue }
-        .map { it.name }.toSet().let(Collections::unmodifiableSet)
-}
 
 internal fun readDataKM(metadata: Metadata): KmData? {
     val km = (KotlinClassMetadata.readStrict(metadata) as? KotlinClassMetadata.Class)?.kmClass?.takeIf { it.isData }

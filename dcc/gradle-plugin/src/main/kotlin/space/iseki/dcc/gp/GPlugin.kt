@@ -7,8 +7,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import space.iseki.dcc.gen.PostProcess
 import java.io.File
 
+/**
+ * Gradle plugin DCC
+ */
 @Suppress("unused")
 class GPlugin : Plugin<Project> {
+    /**
+     * Apply the plugin to the given target object.
+     */
     override fun apply(target: Project) {
         @Suppress("LocalVariableName") val LOG = target.logger
         LOG.info("DCC plugin apply")
