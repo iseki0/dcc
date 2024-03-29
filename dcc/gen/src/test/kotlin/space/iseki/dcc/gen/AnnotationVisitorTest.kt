@@ -12,7 +12,6 @@ import space.iseki.dcc.Encoder
 import java.io.InputStream
 import java.io.PrintWriter
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -179,7 +178,7 @@ private fun getByteCode(c: Class<*>): ByteArray {
 }
 
 private val testEncoder = object: Encoder{
-    override fun setObject(name: String, value: Any?) {
+    override fun setObject(codec: Codec<*>, name: String, value: Any?) {
         println("$name -> $value")
     }
 }

@@ -20,3 +20,9 @@ tasks.named("javadoc", Javadoc::class.java) {
         addStringOption("-patch-module", "space.iseki.dcc.api=${sourceSets["main"].output.asPath}")
     }
 }
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xno-param-assertions")
+    }
+}

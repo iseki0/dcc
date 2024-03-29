@@ -21,7 +21,7 @@ public class Gen {
     private static final String[] EMPTY_STR_ARRAY = new String[0];
     private static final String MDESC_OBJECT_DECODER = Type.getMethodDescriptor(Types.OBJECT, Types.DECODER);
     private static final String MDESC_VOID_OBJECT_ENCODER = Type.getMethodDescriptor(Types.VOID, Types.OBJECT, Types.ENCODER);
-    private static final String MDESC_BOOLEAN_STRING = Type.getMethodDescriptor(Types.BOOLEAN, Types.STRING);
+    private static final String MDESC_BOOLEAN_STRING = Type.getMethodDescriptor(Types.BOOLEAN, Types.CODEC, Types.INT);
     private static final String MDESC_VOID_STRING_CLASS_BOOL = Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.CLASS, Types.BOOLEAN);
 
     private static final String[] CODEC_INAME_ARRAY = new String[]{INames.CODEC};
@@ -155,10 +155,13 @@ public class Gen {
         mv.visitVarInsn(Opcodes.ALOAD, 1);
         mv.visitTypeInsn(Opcodes.CHECKCAST, clzIName);
         mv.visitVarInsn(Opcodes.ASTORE, 3);
-        for (Field field : type.fields()) {
+        List<Field> fields = type.fields();
+        for (int i = 0, fieldsSize = fields.size(); i < fieldsSize; i++) {
+            Field field = fields.get(i);
             var mc = EncoderMethodCall.of(field.descriptor());
             mv.visitVarInsn(Opcodes.ALOAD, 2);
-            mv.visitLdcInsn(field.name());
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            pushInt(mv, i);
             mv.visitVarInsn(Opcodes.ALOAD, 3);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clzIName, field.getter(), Type.getMethodDescriptor(Type.getType(field.descriptor())), false);
             mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, INames.ENCODER, mc.name, mc.mdesc, true);
@@ -260,7 +263,8 @@ public class Gen {
             var labelGetValue = new Label();
             labelSkip = new Label();
             mv.visitVarInsn(Opcodes.ALOAD, 1);
-            mv.visitLdcInsn(field.name());
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            pushInt(mv, pos);
             mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, INames.DECODER, "isDefault", MDESC_BOOLEAN_STRING, true);
             mv.visitJumpInsn(Opcodes.IFEQ, labelGetValue);
             pushZeroValue(mv, mc.zero);
@@ -272,7 +276,8 @@ public class Gen {
             mv.visitLabel(labelGetValue);
         }
         mv.visitVarInsn(Opcodes.ALOAD, 1);
-        mv.visitLdcInsn(field.name());
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        pushInt(mv, pos);
         var targetType = Type.getType(field.descriptor());
         if (mc.complex) {
             mv.visitLdcInsn(targetType);
@@ -346,15 +351,15 @@ public class Gen {
 
     record EncoderMethodCall(String name, String mdesc) {
 
-        public static final EncoderMethodCall BYTE = new EncoderMethodCall("setByte", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.BYTE));
-        public static final EncoderMethodCall CHAR = new EncoderMethodCall("setChar", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.CHAR));
-        public static final EncoderMethodCall SHORT = new EncoderMethodCall("setShort", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.SHORT));
-        public static final EncoderMethodCall INT = new EncoderMethodCall("setInt", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.INT));
-        public static final EncoderMethodCall LONG = new EncoderMethodCall("setLong", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.LONG));
-        public static final EncoderMethodCall FLOAT = new EncoderMethodCall("setFloat", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.FLOAT));
-        public static final EncoderMethodCall DOUBLE = new EncoderMethodCall("setDouble", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.DOUBLE));
-        public static final EncoderMethodCall BOOLEAN = new EncoderMethodCall("setBoolean", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.BOOLEAN));
-        public static final EncoderMethodCall OBJECT = new EncoderMethodCall("setObject", Type.getMethodDescriptor(Types.VOID, Types.STRING, Types.OBJECT));
+        public static final EncoderMethodCall BYTE = new EncoderMethodCall("setByte", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.BYTE));
+        public static final EncoderMethodCall CHAR = new EncoderMethodCall("setChar", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.CHAR));
+        public static final EncoderMethodCall SHORT = new EncoderMethodCall("setShort", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.SHORT));
+        public static final EncoderMethodCall INT = new EncoderMethodCall("setInt", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.INT));
+        public static final EncoderMethodCall LONG = new EncoderMethodCall("setLong", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.LONG));
+        public static final EncoderMethodCall FLOAT = new EncoderMethodCall("setFloat", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.FLOAT));
+        public static final EncoderMethodCall DOUBLE = new EncoderMethodCall("setDouble", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.DOUBLE));
+        public static final EncoderMethodCall BOOLEAN = new EncoderMethodCall("setBoolean", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.BOOLEAN));
+        public static final EncoderMethodCall OBJECT = new EncoderMethodCall("setObject", Type.getMethodDescriptor(Types.VOID, Types.CODEC, Types.INT, Types.OBJECT));
 
         public static EncoderMethodCall of(String descriptor) {
             //noinspection DuplicatedCode
@@ -373,15 +378,15 @@ public class Gen {
     }
 
     record DecoderMethodCall(String name, String mdesc, Class<?> zero, boolean complex) {
-        public static final DecoderMethodCall BYTE = new DecoderMethodCall("getByte", Type.getMethodDescriptor(Types.BYTE, Types.STRING), byte.class, false);
-        public static final DecoderMethodCall CHAR = new DecoderMethodCall("getChar", Type.getMethodDescriptor(Types.CHAR, Types.STRING), char.class, false);
-        public static final DecoderMethodCall SHORT = new DecoderMethodCall("getShort", Type.getMethodDescriptor(Types.SHORT, Types.STRING), short.class, false);
-        public static final DecoderMethodCall INT = new DecoderMethodCall("getInt", Type.getMethodDescriptor(Types.INT, Types.STRING), int.class, false);
-        public static final DecoderMethodCall LONG = new DecoderMethodCall("getLong", Type.getMethodDescriptor(Types.LONG, Types.STRING), long.class, false);
-        public static final DecoderMethodCall FLOAT = new DecoderMethodCall("getFloat", Type.getMethodDescriptor(Types.FLOAT, Types.STRING), float.class, false);
-        public static final DecoderMethodCall DOUBLE = new DecoderMethodCall("getDouble", Type.getMethodDescriptor(Types.DOUBLE, Types.STRING), double.class, false);
-        public static final DecoderMethodCall BOOLEAN = new DecoderMethodCall("getBoolean", Type.getMethodDescriptor(Types.BOOLEAN, Types.STRING), boolean.class, false);
-        public static final DecoderMethodCall OBJECT = new DecoderMethodCall("getObject", Type.getMethodDescriptor(Types.OBJECT, Types.STRING, Types.CLASS), Object.class, true);
+        public static final DecoderMethodCall BYTE = new DecoderMethodCall("getByte", Type.getMethodDescriptor(Types.BYTE, Types.CODEC, Types.INT), byte.class, false);
+        public static final DecoderMethodCall CHAR = new DecoderMethodCall("getChar", Type.getMethodDescriptor(Types.CHAR, Types.CODEC, Types.INT), char.class, false);
+        public static final DecoderMethodCall SHORT = new DecoderMethodCall("getShort", Type.getMethodDescriptor(Types.SHORT, Types.CODEC, Types.INT), short.class, false);
+        public static final DecoderMethodCall INT = new DecoderMethodCall("getInt", Type.getMethodDescriptor(Types.INT, Types.CODEC, Types.INT), int.class, false);
+        public static final DecoderMethodCall LONG = new DecoderMethodCall("getLong", Type.getMethodDescriptor(Types.LONG, Types.CODEC, Types.INT), long.class, false);
+        public static final DecoderMethodCall FLOAT = new DecoderMethodCall("getFloat", Type.getMethodDescriptor(Types.FLOAT, Types.CODEC, Types.INT), float.class, false);
+        public static final DecoderMethodCall DOUBLE = new DecoderMethodCall("getDouble", Type.getMethodDescriptor(Types.DOUBLE, Types.CODEC, Types.INT), double.class, false);
+        public static final DecoderMethodCall BOOLEAN = new DecoderMethodCall("getBoolean", Type.getMethodDescriptor(Types.BOOLEAN, Types.CODEC, Types.INT), boolean.class, false);
+        public static final DecoderMethodCall OBJECT = new DecoderMethodCall("getObject", Type.getMethodDescriptor(Types.OBJECT, Types.CODEC, Types.INT, Types.CLASS), Object.class, true);
 
         public static DecoderMethodCall of(String descriptor) {
             //noinspection DuplicatedCode

@@ -57,9 +57,11 @@ subprojects {
     java {
         withJavadocJar()
         withSourcesJar()
-    }
-    kotlin {
-        jvmToolchain(17)
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
     tasks.withType<KotlinCompile> {
         compilerOptions {

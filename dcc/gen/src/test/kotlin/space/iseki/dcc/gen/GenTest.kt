@@ -26,13 +26,13 @@ class GenTest {
                 @Suppress("UNCHECKED_CAST")
                 println(a as Codec<A>)
                 val data = a.decodeFrom(object : Decoder {
-                    override fun getObject(name: String, type: Class<*>): Any {
+                    override fun getObject(codec: Codec<*>,name: String, type: Class<*>): Any {
                         println("$name -> $type")
                         if (name == "c") return "cv"
                         return 1
                     }
 
-                    override fun isDefault(name: String): Boolean {
+                    override fun isDefault(codec: Codec<*>,name: String): Boolean {
                         return name != "c"
                     }
                 })
@@ -40,7 +40,7 @@ class GenTest {
                 println(a.getFieldsMirror())
                 println(a.getFieldsMirror()::class.java)
                 a.encodeTo(data, object : Encoder {
-                    override fun setObject(name: String, value: Any?) {
+                    override fun setObject(codec: Codec<*>, name: String, value: Any?) {
                         println("set: $name -> $value")
                     }
                 })
