@@ -64,8 +64,12 @@ public class Gen {
     private static void pushInt(MethodVisitor mv, int i) {
         if (i >= -1 && i < 6) {
             mv.visitInsn(i + 3);
-        } else {
+        } else if (i >= Byte.MIN_VALUE & i < Byte.MAX_VALUE) {
             mv.visitIntInsn(Opcodes.BIPUSH, i);
+        } else if (i >= Short.MIN_VALUE & i < Short.MAX_VALUE) {
+            mv.visitIntInsn(Opcodes.SIPUSH, i);
+        } else {
+            mv.visitLdcInsn(i);
         }
     }
 
@@ -258,8 +262,8 @@ public class Gen {
         var mc = DecoderMethodCall.of(field.descriptor());
         Label labelSkip = null;
         if (useDefault & field.optional()) {
-            var orValue = 1 << (pos - 1) % 32;
-            var bitmapIdx = (pos - 1) / 32 + 2;
+            var orValue = 1 << pos % 32;
+            var bitmapIdx = pos / 32 + 2;
             var labelGetValue = new Label();
             labelSkip = new Label();
             mv.visitVarInsn(Opcodes.ALOAD, 1);
