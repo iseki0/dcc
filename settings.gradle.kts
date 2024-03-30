@@ -3,4 +3,3 @@ plugins {
 }
 rootProject.name = "data-class-codec"
 includeBuild("dcc")
-includeBuild("test-plugin")
