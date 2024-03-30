@@ -31,6 +31,6 @@ jobs:
           cache-read-only: false
 
       - name: Build dcc
-        run: ./gradlew :dcc:build
+        run: cd dcc && ./gradlew :build
 
 
