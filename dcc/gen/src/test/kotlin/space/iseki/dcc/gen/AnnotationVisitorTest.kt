@@ -154,6 +154,7 @@ class AnnotationVisitorTest {
 
     @Test
     fun testIntrinsicReplacement() {
+        // todo: replace the static class file by Java Compiler API
         val bc = this::class.java.getResourceAsStream("/TestG.class")!!.use(InputStream::readAllBytes)
         val cr = ClassReader(bc)
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
