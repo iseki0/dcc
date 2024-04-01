@@ -43,9 +43,3 @@ data class KmData(val fields: List<F>) {
     data class F(val name: String, val optional: Boolean)
 }
 
-class TestG{
-    fun a(){
-        println(Data.getCodec(Field::class.java))
-    }
-}
-
