@@ -27,6 +27,94 @@ class GenTest {
         val f: Int? = null
     )
 
+    @JvmRecord
+    data class TestRecord(
+        val i: Int,
+        val iDefault: Int = 2,
+        val iNull: Int?,
+        val iNullDefault: Int? = 4,
+    )
+
+    data class TestData(
+        val i: Int,
+        val iDefault: Int = 2,
+        val iNull: Int?,
+        val iNullDefault: Int? = 4,
+    )
+
+    @Test
+    fun testRecord() {
+        val m = DType(
+            qname = TestRecord::class.java.name,
+            fields = listOf(
+                Field("i", "I", false, "i"),
+                Field("iDefault", "I", true, "iDefault"),
+                Field("iNull", "Ljava/lang/Integer;", false, "iNull"),
+                Field("iNullDefault", "Ljava/lang/Integer;", true, "iNullDefault"),
+            ),
+            useDefault = true,
+        )
+        val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
+        val lc = loadClass(m.qname + "\$DCodec", data)
+        @Suppress( "UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestRecord>>)
+        // test encoding
+        val encoder = Mockito.mock<Encoder>()!!
+        codec.encodeTo(TestRecord(1, 2, 3, 4), encoder)
+        val eOrderVerifier = Mockito.inOrder(encoder)
+        eOrderVerifier.verify(encoder).setInt(codec, 0, 1)
+        eOrderVerifier.verify(encoder).setInt(codec, 1, 2)
+        eOrderVerifier.verify(encoder).setObject(codec, 2, 3)
+        eOrderVerifier.verify(encoder).setObject(codec, 3, 4)
+        // test decoding
+        val decoder = Mockito.mock<Decoder>()
+        Mockito.`when`(decoder.isDefault(codec, 0)).thenReturn(false)
+        Mockito.`when`(decoder.getInt(codec, 0)).thenReturn(5)
+        Mockito.`when`(decoder.isDefault(codec, 1)).thenReturn(true)
+        Mockito.`when`(decoder.getInt(codec, 1)).then { error("shouldn't be called") }
+        Mockito.`when`(decoder.isDefault(codec, 2)).thenReturn(false)
+        Mockito.`when`(decoder.getObject(codec, 2, Int::class.java)).thenReturn(6)
+        Mockito.`when`(decoder.isDefault(codec, 3)).thenReturn(true)
+        Mockito.`when`(decoder.getObject(codec, 3, Int::class.java)).then { error("shouldn't be called") }
+        val r = codec.decodeFrom(decoder)
+        assertEquals(TestRecord(5, 2, null, 4), r)
+    }
+    @Test
+    fun testCommon() {
+        val m = DType(
+            qname = TestData::class.java.name,
+            fields = listOf(
+                Field("i", "I", false ),
+                Field("iDefault", "I", true),
+                Field("iNull", "Ljava/lang/Integer;", false),
+                Field("iNullDefault", "Ljava/lang/Integer;", true),
+            ),
+            useDefault = true,
+        )
+        val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
+        val lc = loadClass(m.qname + "\$DCodec", data)
+        @Suppress( "UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestData>>)
+        // test encoding
+        val encoder = Mockito.mock<Encoder>()!!
+        codec.encodeTo(TestData(1, 2, 3, 4), encoder)
+        val eOrderVerifier = Mockito.inOrder(encoder)
+        eOrderVerifier.verify(encoder).setInt(codec, 0, 1)
+        eOrderVerifier.verify(encoder).setInt(codec, 1, 2)
+        eOrderVerifier.verify(encoder).setObject(codec, 2, 3)
+        eOrderVerifier.verify(encoder).setObject(codec, 3, 4)
+        // test decoding
+        val decoder = Mockito.mock<Decoder>()
+        Mockito.`when`(decoder.isDefault(codec, 0)).thenReturn(false)
+        Mockito.`when`(decoder.getInt(codec, 0)).thenReturn(5)
+        Mockito.`when`(decoder.isDefault(codec, 1)).thenReturn(true)
+        Mockito.`when`(decoder.getInt(codec, 1)).then { error("shouldn't be called") }
+        Mockito.`when`(decoder.isDefault(codec, 2)).thenReturn(false)
+        Mockito.`when`(decoder.getObject(codec, 2, Int::class.java)).thenReturn(6)
+        Mockito.`when`(decoder.isDefault(codec, 3)).thenReturn(true)
+        Mockito.`when`(decoder.getObject(codec, 3, Int::class.java)).then { error("shouldn't be called") }
+        val r = codec.decodeFrom(decoder)
+        assertEquals(TestData(5, 2, null, 4), r)
+    }
+
     @Test
     fun test2() {
         val enhancedA = DType(
@@ -156,6 +244,4 @@ class GenTest {
     }
 
 }
-
-data class A(val a: Int = 11, val b: Int = 12, val c: String = "aaaa")
 
