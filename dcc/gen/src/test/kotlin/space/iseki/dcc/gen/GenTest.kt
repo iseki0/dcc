@@ -11,6 +11,7 @@ import org.mockito.Mockito
 import space.iseki.dcc.Codec
 import space.iseki.dcc.Decoder
 import space.iseki.dcc.Encoder
+import java.lang.invoke.VarHandle
 import kotlin.test.assertEquals
 
 class GenTest {
@@ -56,7 +57,7 @@ class GenTest {
         )
         val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
         val lc = loadClass(m.qname + "\$DCodec", data)
-        @Suppress( "UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestRecord>>)
+        @Suppress("UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestRecord>>)
         // test encoding
         val encoder = Mockito.mock<Encoder>()!!
         codec.encodeTo(TestRecord(1, 2, 3, 4), encoder)
@@ -78,12 +79,13 @@ class GenTest {
         val r = codec.decodeFrom(decoder)
         assertEquals(TestRecord(5, 2, null, 4), r)
     }
+
     @Test
     fun testCommon() {
         val m = DType(
             qname = TestData::class.java.name,
             fields = listOf(
-                Field("i", "I", false ),
+                Field("i", "I", false),
                 Field("iDefault", "I", true),
                 Field("iNull", "Ljava/lang/Integer;", false),
                 Field("iNullDefault", "Ljava/lang/Integer;", true),
@@ -92,7 +94,7 @@ class GenTest {
         )
         val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
         val lc = loadClass(m.qname + "\$DCodec", data)
-        @Suppress( "UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestData>>)
+        @Suppress("UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestData>>)
         // test encoding
         val encoder = Mockito.mock<Encoder>()!!
         codec.encodeTo(TestData(1, 2, 3, 4), encoder)
@@ -243,5 +245,60 @@ class GenTest {
         return j
     }
 
+    @Test
+    fun test33Optional() {
+        data class A(
+            val f0: Int = 0,
+            val f1: Int = 1,
+            val f2: Int = 2,
+            val f3: Int = 3,
+            val f4: Int = 4,
+            val f5: Int = 5,
+            val f6: Int = 6,
+            val f7: Int = 7,
+            val f8: Int = 8,
+            val f9: Int = 9,
+            val f10: Int = 10,
+            val f11: Int = 11,
+            val f12: Int = 12,
+            val f13: Int = 13,
+            val f14: Int = 14,
+            val f15: Int = 15,
+            val f16: Int = 16,
+            val f17: Int = 17,
+            val f18: Int = 18,
+            val f19: Int = 19,
+            val f20: Int = 20,
+            val f21: Int = 21,
+            val f22: Int = 22,
+            val f23: Int = 23,
+            val f24: Int = 24,
+            val f25: Int = 25,
+            val f26: Int = 26,
+            val f27: Int = 27,
+            val f28: Int = 28,
+            val f29: Int = 29,
+            val f30: Int = 30,
+            val f31: Int = 31,
+            val f32: Int = 32,
+        )
+
+        val dType = DType(
+            qname = A::class.java.name,
+            fields = (0..32).map { Field("f$it", "I", true) },
+            useDefault = true,
+        )
+        val ba = Gen(Gen.ENABLE_CHECK).generate(dType)
+        val a =
+            getInstance(loadClass(dType.qname + "\$DCodec", ba) as Class<Codec<A>>)
+        val decoder = Mockito.mock<Decoder>()
+        Mockito.`when`(decoder.isDefault(Mockito.eq(a), Mockito.intThat { it < 34 })).thenReturn(false)
+        Mockito.`when`(decoder.getInt(Mockito.eq(a), Mockito.intThat { it < 34 })).thenReturn(100)
+        val expected = A::class.java.constructors.find { it.parameterCount == 33 }!!.newInstance(*(1..33).map { 100 }.toTypedArray())
+        val decoded = a.decodeFrom(decoder)
+        assertEquals(expected, decoded)
+        println(decoded)
+        decompileByteCode(ba).also(::println)
+    }
 }
 
