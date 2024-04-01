@@ -9,13 +9,12 @@ import space.iseki.dcc.Codec
 import space.iseki.dcc.Data
 import space.iseki.dcc.Dcc
 import space.iseki.dcc.Encoder
-import java.io.InputStream
 import java.io.PrintWriter
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-class AnnotationVisitorTest {
+class PostProcessClassVisitorTest2 {
 
     @JvmRecord
     @Dcc
@@ -151,26 +150,6 @@ class AnnotationVisitorTest {
         }
     }
 
-
-    @Test
-    fun testIntrinsicReplacement() {
-        // todo: replace the static class file by Java Compiler API
-        val bc = this::class.java.getResourceAsStream("/TestG.class")!!.use(InputStream::readAllBytes)
-        val cr = ClassReader(bc)
-        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        val cca = CheckClassAdapter(cw, true)
-        val tcv = TraceClassVisitor(cca, PrintWriter(System.out))
-        val ppcv = PostProcessClassVisitor(tcv)
-        cr.accept(ppcv, 0)
-        val ba = cw.toByteArray()
-        val clazz: Class<*>
-        object : ClassLoader() {
-            init {
-                clazz = defineClass("space.iseki.dcc.gen.TestG", ba, 0, ba.size)
-            }
-        }
-        println(clazz)
-    }
 }
 
 private fun getByteCode(c: Class<*>): ByteArray {

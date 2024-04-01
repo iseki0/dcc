@@ -1,17 +1,10 @@
 package space.iseki.dcc.gen
 
-import org.benf.cfr.reader.api.CfrDriver
-import org.benf.cfr.reader.api.ClassFileSource
-import org.benf.cfr.reader.api.OutputSinkFactory
-import org.benf.cfr.reader.api.OutputSinkFactory.SinkClass
-import org.benf.cfr.reader.api.SinkReturns
-import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import space.iseki.dcc.Codec
 import space.iseki.dcc.Decoder
 import space.iseki.dcc.Encoder
-import java.lang.invoke.VarHandle
 import kotlin.test.assertEquals
 
 class GenTest {
@@ -56,8 +49,8 @@ class GenTest {
             useDefault = true,
         )
         val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
-        val lc = loadClass(m.qname + "\$DCodec", data)
-        @Suppress("UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestRecord>>)
+        val lc = loadClass<Codec<TestRecord>>(m.qname + "\$DCodec", data)
+        val codec = getCodecInstance(lc)
         // test encoding
         val encoder = Mockito.mock<Encoder>()!!
         codec.encodeTo(TestRecord(1, 2, 3, 4), encoder)
@@ -93,8 +86,8 @@ class GenTest {
             useDefault = true,
         )
         val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(m)
-        val lc = loadClass(m.qname + "\$DCodec", data)
-        @Suppress("UNCHECKED_CAST") val codec = getInstance(lc as Class<Codec<TestData>>)
+        val lc = loadClass<Codec<TestData>>(m.qname + "\$DCodec", data)
+        val codec = getCodecInstance(lc)
         // test encoding
         val encoder = Mockito.mock<Encoder>()!!
         codec.encodeTo(TestData(1, 2, 3, 4), encoder)
@@ -139,10 +132,10 @@ class GenTest {
         val data = Gen(Gen.ENABLE_CHECK or Gen.ENABLE_DEBUG_PRINT).generate(enhancedA)
         println("=====================   Generated   =====================")
         println("generated, length: " + data.size)
-        val lc = loadClass(enhancedA.qname + "\$DCodec", data)
+        val lc = loadClass<Codec<A>>(enhancedA.qname + "\$DCodec", data)
         println("printing decompiled source code: ")
         println(decompileByteCode(data))
-        @Suppress("UNCHECKED_CAST") val aCodec = getInstance(lc as Class<Codec<A>>)
+        val aCodec = getCodecInstance(lc)
         assertEquals(6, aCodec.getFieldsMirror().size)
         assertEquals("a", aCodec.getFieldsMirror().first().name())
         assertEquals("f", aCodec.getFieldsMirror().last().name())
@@ -186,64 +179,6 @@ class GenTest {
         }
     }
 
-    private fun loadClass(name: String, ba: ByteArray): Class<*> {
-        val cls: Class<*>
-        object : ClassLoader() {
-            init {
-                cls = defineClass(name, ba, 0, ba.size)
-            }
-        }
-        return cls
-    }
-
-    private fun <T : Any> getInstance(cdc: Class<Codec<T>>): Codec<T> {
-        @Suppress("UNCHECKED_CAST") return cdc.declaredFields.find { it.name == "INSTANCE" }!!.get(null) as Codec<T>
-    }
-
-    private fun decompileByteCode(bc: ByteArray): String {
-        var j = ""
-        val o = object : ClassFileSource {
-            var f = true
-            override fun informAnalysisRelativePathDetail(usePath: String?, classFilePath: String?) {}
-
-            override fun addJar(jarPath: String?): Collection<String> = emptyList()
-
-            override fun getPossiblyRenamedPath(path: String): String {
-                println("getPossiblyRenamedPath: $path -> $f")
-                if (f) {
-                    f = false
-                    return "foo.class"
-                }
-                return path
-            }
-
-            override fun getClassFileContent(path: String?): Pair<ByteArray, String> {
-                println("getClassFileContent: $path")
-                return Pair.make(bc, "foo.class")
-            }
-        }
-
-        CfrDriver.Builder().withOutputSink(object : OutputSinkFactory {
-            override fun getSupportedSinks(
-                p0: OutputSinkFactory.SinkType?, p1: MutableCollection<SinkClass>?
-            ): List<SinkClass> {
-                return if (p0 == OutputSinkFactory.SinkType.JAVA) {
-                    listOf(SinkClass.DECOMPILED)
-                } else {
-                    emptyList()
-                }
-            }
-
-            override fun <T : Any?> getSink(
-                p0: OutputSinkFactory.SinkType?, p1: SinkClass?
-            ): OutputSinkFactory.Sink<T> = OutputSinkFactory.Sink {
-                if (it is SinkReturns.Decompiled) {
-                    j = it.java
-                }
-            }
-        }).withClassFileSource(o).build().analyse(listOf("foo.class"))
-        return j
-    }
 
     @Test
     fun test33Optional() {
@@ -289,12 +224,12 @@ class GenTest {
             useDefault = true,
         )
         val ba = Gen(Gen.ENABLE_CHECK).generate(dType)
-        val a =
-            getInstance(loadClass(dType.qname + "\$DCodec", ba) as Class<Codec<A>>)
+        val a = getCodecInstance(loadClass<Codec<A>>(dType.qname + "\$DCodec", ba))
         val decoder = Mockito.mock<Decoder>()
         Mockito.`when`(decoder.isDefault(Mockito.eq(a), Mockito.intThat { it < 34 })).thenReturn(false)
         Mockito.`when`(decoder.getInt(Mockito.eq(a), Mockito.intThat { it < 34 })).thenReturn(100)
-        val expected = A::class.java.constructors.find { it.parameterCount == 33 }!!.newInstance(*(1..33).map { 100 }.toTypedArray())
+        val expected = A::class.java.constructors.find { it.parameterCount == 33 }!!
+            .newInstance(*(1..33).map { 100 }.toTypedArray())
         val decoded = a.decodeFrom(decoder)
         assertEquals(expected, decoded)
         println(decoded)
