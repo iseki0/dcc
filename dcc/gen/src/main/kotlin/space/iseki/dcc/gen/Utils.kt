@@ -6,7 +6,6 @@ import kotlinx.metadata.declaresDefaultValue
 import kotlinx.metadata.isData
 import kotlinx.metadata.isSecondary
 import kotlinx.metadata.jvm.KotlinClassMetadata
-import space.iseki.dcc.Data
 
 private val EMPTY_INT_ARRAY = IntArray(0)
 private val EMPTY_STRING_ARRAY = Array(0) { "" }
