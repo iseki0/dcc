@@ -3,7 +3,7 @@ package space.iseki.dcc.gen;
 import org.objectweb.asm.*;
 
 @SuppressWarnings({"deprecation", "unused"})
-public class NMethodVisitor extends MethodVisitor {
+class NMethodVisitor extends MethodVisitor {
 
     protected NMethodVisitor(int api, MethodVisitor methodVisitor) {
         super(api, methodVisitor);
